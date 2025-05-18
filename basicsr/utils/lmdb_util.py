@@ -180,8 +180,8 @@ class LmdbMaker():
 
     def __init__(self,
                  lmdb_path,
-                 map_size=1024**4,
-                 batch=5000,
+                 map_size=30*1024**3,     # 30 * 1024 * 1024 * 1024 30G
+                 batch=500,
                  compress_level=1):
         if not lmdb_path.endswith('.lmdb'):
             raise ValueError("lmdb_path must end with '.lmdb'.")

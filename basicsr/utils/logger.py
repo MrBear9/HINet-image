@@ -1,9 +1,3 @@
-# ------------------------------------------------------------------------
-# Copyright (c) 2021 megvii-model. All Rights Reserved.
-# ------------------------------------------------------------------------
-# Modified from BasicSR (https://github.com/xinntao/BasicSR)
-# Copyright 2018-2020 BasicSR Authors
-# ------------------------------------------------------------------------
 import datetime
 import logging
 import time
@@ -162,18 +156,13 @@ def get_env_info():
     import torch
     import torchvision
     import sys,os
-    sys.path.append(os.getcwd())
+    sys.path.append(os.getcwd())                            # 解决 ModuleNotFoundError
     try:
         from basicsr.version import __version__             # 尝试正常导入
     except ImportError:
         __version__ = "unknown"                             # 如果文件不存在，设置默认值
     #from basicsr.version import __version__
     msg = r"""
-                ____                _       _____  ____
-               / __ ) ____ _ _____ (_)_____/ ___/ / __ \
-              / __  |/ __ `// ___// // ___/\__ \ / /_/ /
-             / /_/ // /_/ /(__  )/ // /__ ___/ // _, _/
-            /_____/ \__,_//____//_/ \___//____//_/ |_|
      ______                   __   __                 __      __
     / ____/____   ____   ____/ /  / /   __  __ _____ / /__   / /
    / / __ / __ \ / __ \ / __  /  / /   / / / // ___// //_/  / /
