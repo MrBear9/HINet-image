@@ -1,9 +1,3 @@
-# ------------------------------------------------------------------------
-# Copyright (c) 2021 megvii-model. All Rights Reserved.
-# ------------------------------------------------------------------------
-# Modified from BasicSR (https://github.com/xinntao/BasicSR)
-# Copyright 2018-2020 BasicSR Authors
-# ------------------------------------------------------------------------
 import cv2
 import lmdb
 import sys
@@ -16,10 +10,10 @@ def make_lmdb_from_imgs(data_path,
                         lmdb_path,
                         img_path_list,
                         keys,
-                        batch=5000,
+                        batch=500,
                         compress_level=1,
                         multiprocessing_read=False,
-                        n_thread=40,
+                        n_thread=20,
                         map_size=None):
     """Make lmdb from images.
 
