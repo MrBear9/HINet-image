@@ -7,6 +7,7 @@ import time
 import torch
 import os
 from os import path as osp
+from tqdm import tqdm
 import sys
 sys.path.append(os.getcwd())
 from basicsr.data import create_dataloader, create_dataset
@@ -57,21 +58,38 @@ def parse_options(is_train=True):
 
     return opt
 
+# 添加自定义的TqdmLoggingHandler
+class TqdmLoggingHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            tqdm.write(msg, end='')
+        except Exception:
+            self.handleError(record)
 
 def init_loggers(opt):
     log_file = osp.join(opt['path']['log'],
                         f"train_{opt['name']}_{get_time_str()}.log")
     logger = get_root_logger(
         logger_name='basicsr', log_level=logging.INFO, log_file=log_file)
+    
+    # 移除所有现有的StreamHandler
+    for handler in logger.handlers[:]:
+        if isinstance(handler, logging.StreamHandler):
+            logger.removeHandler(handler)
+    
+    # 添加自定义的TqdmLoggingHandler
+    tqdm_handler = TqdmLoggingHandler()
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    tqdm_handler.setFormatter(formatter)
+    logger.addHandler(tqdm_handler)
+    
     logger.info(get_env_info())
     logger.info(dict2str(opt))
 
-    # initialize wandb logger before tensorboard logger to allow proper sync:
-    if (opt['logger'].get('wandb')
-            is not None) and (opt['logger']['wandb'].get('project')
-                              is not None) and ('debug' not in opt['name']):
-        assert opt['logger'].get('use_tb_logger') is True, (
-            'should turn on tensorboard when using wandb')
+    # 初始化wandb和tensorboard logger（保持原样）
+    if (opt['logger'].get('wandb') is not None) and (opt['logger']['wandb'].get('project') is not None) and ('debug' not in opt['name']):
+        assert opt['logger'].get('use_tb_logger') is True, 'should turn on tensorboard when using wandb'
         init_wandb_logger(opt)
     tb_logger = None
     if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name']:
@@ -213,14 +231,34 @@ def main():
     while current_iter <= total_iters:
         train_sampler.set_epoch(epoch)
         prefetcher.reset()
-        train_data = prefetcher.next()
+    
+        logger.info(f"Loading data for iter {current_iter}")
 
+        train_data = prefetcher.next()
+        if train_data is None:
+            logger.error("No data returned from prefetcher!")
+            break
+        print("train_data is have data")
+        
+         # 初始化进度条
+        progress_bar = tqdm(
+            initial=current_iter,
+            total=total_iters,
+            desc=f"Training Progress",
+            unit="iter",
+            dynamic_ncols=True,
+            leave=True  # 进度条完成后保留显示
+        )
         while train_data is not None:
             data_time = time.time() - data_time
 
             current_iter += 1
             if current_iter > total_iters:
                 break
+            # 更新进度条
+            progress_bar.update(1)  # 每次迭代更新进度条
+            progress_bar.set_postfix_str(f"Iter: {current_iter}/{total_iters}")
+
             # update learning rate
             model.update_learning_rate(
                 current_iter, warmup_iter=opt['train'].get('warmup_iter', -1))
@@ -228,6 +266,7 @@ def main():
             model.feed_data(train_data)
             model.optimize_parameters(current_iter)
             iter_time = time.time() - iter_time
+
             # log
             if current_iter % opt['logger']['print_freq'] == 0:
                 log_vars = {'epoch': epoch, 'iter': current_iter}
@@ -255,7 +294,9 @@ def main():
             train_data = prefetcher.next()
         # end of iter
         epoch += 1
-
+    # 训练结束后关闭进度条
+    # progress_bar.close()
+        
     # end of epoch
 
     consumed_time = str(

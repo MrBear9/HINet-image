@@ -1,6 +1,6 @@
 import cv2
 import random
-
+import numpy as np 
 
 def mod_crop(img, scale):
     """Mod crop images, used during testing.
