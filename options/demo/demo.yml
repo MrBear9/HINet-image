@@ -8,7 +8,7 @@ manual_seed: 10
 # single image inference and save image
 img_path:
   input_img: ./demo/GOPR0384_11_00-000001.png
-  output_img: ./demo/demo1.png
+  output_img: ./demo/Gopro_me_test.png
 
 # network structures
 network_g:
@@ -19,7 +19,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: ./experiments/pretrained_models/HINet-GoPro.pth
+  pretrain_network_g: ./experiments/GoPro-HINet/models/net_g_latest.pth
   strict_load_g: true
   resume_state: ~
 
